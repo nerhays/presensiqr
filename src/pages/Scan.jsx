@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { BASE_URL } from "../api/api";
 
 export default function Scan() {
   const scannerRef = useRef(null);
   const scannedRef = useRef(false);
+  const [status, setStatus] = useState("idle");
+  // idle | processing | success | error
 
   useEffect(() => {
     scannedRef.current = false;
@@ -17,16 +19,13 @@ export default function Scan() {
       {
         fps: 10,
         qrbox: 250,
-        // Paksa kamera belakang, nonaktifkan fitur tambahan
         facingMode: "environment",
         showTorchButtonIfSupported: false,
         showZoomSliderIfSupported: false,
-        defaultZoomValueIfSupported: 1,
-        // Sembunyikan tombol select camera & scan image file
         rememberLastUsedCamera: false,
-        supportedScanTypes: [0], // 0 = SCAN_TYPE_CAMERA saja
+        supportedScanTypes: [0],
       },
-      false, // verbose = false
+      false,
     );
 
     scannerRef.current = scanner;
@@ -36,11 +35,12 @@ export default function Scan() {
         if (scannedRef.current) return;
         scannedRef.current = true;
 
+        setStatus("processing");
+
         try {
-          // Stop dulu sebelum fetch
           await scannerRef.current.clear().catch(() => {});
 
-          await fetch(`${BASE_URL}?path=presence/checkin`, {
+          const res = await fetch(`${BASE_URL}?path=presence/checkin`, {
             method: "POST",
             body: JSON.stringify({
               user_id: "20230001",
@@ -52,9 +52,15 @@ export default function Scan() {
             }),
           });
 
-          alert("Check-in sukses!");
+          const data = await res.json();
+
+          if (data.ok) {
+            setStatus("success");
+          } else {
+            setStatus("error");
+          }
         } catch (e) {
-          alert("Gagal check-in: " + e.message);
+          setStatus("error");
         }
       },
       () => {},
@@ -69,20 +75,80 @@ export default function Scan() {
   }, []);
 
   return (
-    <div style={{ padding: 20, paddingBottom: 70 }}>
-      <h2>Scan Presensi</h2>
+    <div style={container}>
+      <h2 style={title}>Scan Presensi</h2>
 
-      {/* Sembunyikan tombol switch kamera & scan file via CSS */}
+      {status === "idle" && <div id="reader" style={readerStyle} />}
+
+      {status === "processing" && (
+        <div style={card}>
+          <div className="loader"></div>
+          <p>Memproses presensi...</p>
+        </div>
+      )}
+
+      {status === "success" && (
+        <div style={{ ...card, background: "#e8f5e9" }}>
+          <div style={checkmark}>✔</div>
+          <h3 style={{ color: "green" }}>Presensi Berhasil</h3>
+        </div>
+      )}
+
+      {status === "error" && (
+        <div style={{ ...card, background: "#ffebee" }}>
+          <h3 style={{ color: "red" }}>Gagal Presensi</h3>
+          <button onClick={() => window.location.reload()}>Coba Lagi</button>
+        </div>
+      )}
+
+      {/* CSS Hidden Controls */}
       <style>{`
         #reader__camera_selection { display: none !important; }
         #reader__dashboard_section_swaplink { display: none !important; }
-        select#reader__camera_selection { display: none !important; }
         #reader__filescan_input { display: none !important; }
         span[style*="Scan an Image File"] { display: none !important; }
-        #reader__scan_region img { display: none !important; }
-      `}</style>
 
-      <div id="reader" />
+        .loader {
+          border: 5px solid #eee;
+          border-top: 5px solid #1976d2;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          margin: 0 auto 15px;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
+
+const container = {
+  padding: 20,
+  paddingBottom: 80,
+  textAlign: "center",
+};
+
+const title = {
+  marginBottom: 20,
+};
+
+const readerStyle = {
+  width: "100%",
+  maxWidth: 350,
+  margin: "0 auto",
+};
+
+const card = {
+  padding: 30,
+  borderRadius: 12,
+  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+};
+
+const checkmark = {
+  fontSize: 50,
+  marginBottom: 10,
+};
