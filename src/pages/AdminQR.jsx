@@ -20,18 +20,41 @@ export default function AdminQR() {
   };
 
   return (
-    <div style={page}>
-      <h2>Generate QR</h2>
-      <button onClick={generate}>Generate</button>
+    <div style={wrapper}>
+      <div className="card" style={cardStyle}>
+        <h2 style={{ marginBottom: 10 }}>Generate QR</h2>
 
-      {token && (
-        <>
-          <p>{token}</p>
-          <QRCode value={token} size={220} />
-        </>
-      )}
+        <p style={{ marginBottom: 25, color: "#6b7280" }}>
+          Buat kode QR untuk presensi sesi ini
+        </p>
+
+        <button onClick={generate} style={{ marginBottom: 30 }}>
+          Generate QR
+        </button>
+
+        {token && (
+          <>
+            <p style={{ marginBottom: 15, fontWeight: 600 }}>
+              {token}
+            </p>
+
+            <QRCode value={token} size={220} />
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-const page = { padding: 20, paddingBottom: 70 };
+const wrapper = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  minHeight: "70vh",
+};
+
+const cardStyle = {
+  maxWidth: 600,
+  width: "100%",
+  textAlign: "center",
+};

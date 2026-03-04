@@ -24,14 +24,53 @@ export default function Accel() {
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Accelerometer</h2>
+    <div style={wrapper}>
+      <div className="card" style={cardStyle}>
+        <h2>Accelerometer</h2>
 
-      <button onClick={startSensor}>Aktifkan Sensor</button>
+        <button onClick={startSensor} style={{ marginBottom: 25 }}>
+          Aktifkan Sensor
+        </button>
 
-      <p>X: {d.x.toFixed(2)}</p>
-      <p>Y: {d.y.toFixed(2)}</p>
-      <p>Z: {d.z.toFixed(2)}</p>
+        <div style={grid}>
+          <Stat label="X" value={d.x} />
+          <Stat label="Y" value={d.y} />
+          <Stat label="Z" value={d.z} />
+        </div>
+      </div>
     </div>
   );
 }
+
+function Stat({ label, value }) {
+  return (
+    <div style={statBox}>
+      <p>{label}</p>
+      <h3>{value.toFixed(2)}</h3>
+    </div>
+  );
+}
+
+const wrapper = {
+  display: "flex",
+  justifyContent: "center",
+  minHeight: "70vh",
+};
+
+const cardStyle = {
+  width: "100%",
+  maxWidth: 800,
+};
+
+const grid = {
+  display: "flex",
+  gap: 20,
+};
+
+const statBox = {
+  flex: 1,
+  background: "#f1f5f9",
+  padding: 20,
+  borderRadius: 12,
+  textAlign: "center",
+};
