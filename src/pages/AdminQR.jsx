@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import QRCode from "react-qr-code";
 import { BASE_URL } from "../api/api";
 
 export default function AdminQR() {
   const [token, setToken] = useState("");
+  const [started, setStarted] = useState(false);
 
   const generate = async () => {
     const res = await fetch(`${BASE_URL}?path=presence/qr/generate`, {
@@ -19,24 +20,35 @@ export default function AdminQR() {
     setToken(data.data.qr_token);
   };
 
+  // auto refresh hanya jika sudah ditekan
+  useEffect(() => {
+    if (!started) return;
+
+    generate();
+
+    const interval = setInterval(() => {
+      generate();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [started]);
+
   return (
     <div style={wrapper}>
       <div className="card" style={cardStyle}>
         <h2 style={{ marginBottom: 10 }}>Generate QR</h2>
 
-        <p style={{ marginBottom: 25, color: "#6b7280" }}>
-          Buat kode QR untuk presensi sesi ini
-        </p>
+        <p style={{ marginBottom: 25, color: "#6b7280" }}>Buat kode QR untuk presensi sesi ini</p>
 
-        <button onClick={generate} style={{ marginBottom: 30 }}>
-          Generate QR
-        </button>
+        {!started && (
+          <button onClick={() => setStarted(true)} style={{ marginBottom: 30 }}>
+            Generate QR
+          </button>
+        )}
 
         {token && (
           <>
-            <p style={{ marginBottom: 15, fontWeight: 600 }}>
-              {token}
-            </p>
+            <p style={{ marginBottom: 15, fontWeight: 600 }}>{token}</p>
 
             <QRCode value={token} size={220} />
           </>

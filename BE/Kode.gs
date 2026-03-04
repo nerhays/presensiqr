@@ -60,6 +60,29 @@ function generateQR(e) {
 function checkin(e) {
   const body = JSON.parse(e.postData.contents);
 
+  const tokenSheet = SpreadsheetApp.getActive().getSheetByName("tokens");
+  const tokenData = tokenSheet.getDataRange().getValues();
+
+  let tokenValid = false;
+
+  for (let i = 1; i < tokenData.length; i++) {
+    const token = tokenData[i][0];
+    const expires = new Date(tokenData[i][3]);
+
+    if (token === body.qr_token) {
+      if (new Date() > expires) {
+        return jsonResponse(false, "token_expired");
+      }
+
+      tokenValid = true;
+      break;
+    }
+  }
+
+  if (!tokenValid) {
+    return jsonResponse(false, "invalid_token");
+  }
+
   const id = "PR-" + Utilities.getUuid();
   const sheet = SpreadsheetApp.getActive().getSheetByName("presence");
 
