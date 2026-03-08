@@ -1,36 +1,30 @@
 import { QrCode, ScanLine, MapPin, Activity } from "lucide-react";
 
-export default function BottomNav({ page, setPage }) {
+export default function BottomNav({ role, page, setPage }) {
   return (
     <div style={navWrapper}>
       <div style={navBar}>
-        <NavItem
-          icon={<QrCode size={20} />}
-          label="QR"
-          active={page === "qr"}
-          onClick={() => setPage("qr")}
-        />
+        {/* DOSEN */}
+        {role === "dosen" && (
+          <>
+            <NavItem icon={<QrCode size={20} />} label="QR" active={page === "qr"} onClick={() => setPage("qr")} />
 
-        <NavItem
-          icon={<ScanLine size={20} />}
-          label="Scan"
-          active={page === "scan"}
-          onClick={() => setPage("scan")}
-        />
+            <NavItem icon={<MapPin size={20} />} label="GPS" active={page === "gps"} onClick={() => setPage("gps")} />
 
-        <NavItem
-          icon={<MapPin size={20} />}
-          label="GPS"
-          active={page === "gps"}
-          onClick={() => setPage("gps")}
-        />
+            <NavItem icon={<Activity size={20} />} label="Accel" active={page === "accel"} onClick={() => setPage("accel")} />
+          </>
+        )}
 
-        <NavItem
-          icon={<Activity size={20} />}
-          label="Accel"
-          active={page === "accel"}
-          onClick={() => setPage("accel")}
-        />
+        {/* MAHASISWA */}
+        {role === "mhs" && (
+          <>
+            <NavItem icon={<ScanLine size={20} />} label="Scan" active={page === "scan"} onClick={() => setPage("scan")} />
+
+            <NavItem icon={<MapPin size={20} />} label="GPS" active={page === "gps"} onClick={() => setPage("gps")} />
+
+            <NavItem icon={<Activity size={20} />} label="Accel" active={page === "accel"} onClick={() => setPage("accel")} />
+          </>
+        )}
       </div>
     </div>
   );

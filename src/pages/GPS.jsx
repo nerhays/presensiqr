@@ -1,11 +1,17 @@
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BASE_URL } from "../api/api";
 import "leaflet/dist/leaflet.css";
 
-export default function GPS() {
+export default function GPS({ role }) {
   const [pos, setPos] = useState([-7.2575, 112.7521]);
   const [status, setStatus] = useState("idle");
+
+  const deviceId = localStorage.getItem("device_id") || "dev-demo";
+
+  // ===============================
+  // MAHASISWA : KIRIM GPS
+  // ===============================
 
   const sendGPS = () => {
     setStatus("loading");
@@ -20,7 +26,7 @@ export default function GPS() {
         const res = await fetch(`${BASE_URL}?path=telemetry/gps`, {
           method: "POST",
           body: JSON.stringify({
-            device_id: "dev-001",
+            device_id: deviceId,
             ts: new Date().toISOString(),
             lat,
             lng,
@@ -42,30 +48,61 @@ export default function GPS() {
     });
   };
 
+  // ===============================
+  // DOSEN : LIHAT GPS MAHASISWA
+  // ===============================
+
+  const loadLatestGPS = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}?path=telemetry/gps/latest&device_id=${deviceId}`);
+
+      const data = await res.json();
+
+      if (data.ok) {
+        setPos([data.data.lat, data.data.lng]);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (role === "dosen") {
+      loadLatestGPS();
+
+      const interval = setInterval(() => {
+        loadLatestGPS();
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [role]);
+
+  // ===============================
+  // UI
+  // ===============================
+
   return (
     <div style={wrapper}>
       <div className="card" style={cardStyle}>
         <h2>GPS Tracking</h2>
 
-        <p style={{ marginBottom: 25, color: "#6b7280" }}>
-          Kirim lokasi perangkat
-        </p>
+        {role === "mhs" && <p style={{ marginBottom: 25, color: "#6b7280" }}>Kirim lokasi perangkat</p>}
 
-        <button onClick={sendGPS} style={{ marginBottom: 20 }}>
-          {status === "loading" ? "Mengirim..." : "📍 Kirim Lokasi"}
-        </button>
+        {role === "dosen" && <p style={{ marginBottom: 25, color: "#6b7280" }}>Monitoring lokasi mahasiswa</p>}
 
-        {status === "success" && (
-          <div style={successBox}>✅ Lokasi berhasil dikirim</div>
+        {role === "mhs" && (
+          <button onClick={sendGPS} style={{ marginBottom: 20 }}>
+            {status === "loading" ? "Mengirim..." : "📍 Kirim Lokasi"}
+          </button>
         )}
 
-        {status === "error" && (
-          <div style={errorBox}>❌ Gagal mengirim lokasi</div>
-        )}
+        {status === "success" && <div style={successBox}>✅ Lokasi berhasil dikirim</div>}
+
+        {status === "error" && <div style={errorBox}>❌ Gagal mengirim lokasi</div>}
 
         <div style={mapContainer}>
           <MapContainer center={pos} zoom={15} style={{ height: "100%" }}>
             <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
             <Marker position={pos} />
           </MapContainer>
         </div>
