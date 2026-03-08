@@ -1,19 +1,22 @@
 import { useRef, useState } from "react";
 import { BASE_URL } from "../api/api";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 
 export default function Accel() {
+  function getDeviceId() {
+    let id = localStorage.getItem("device_id");
+
+    if (!id) {
+      id = "dev-" + crypto.randomUUID();
+      localStorage.setItem("device_id", id);
+    }
+
+    return id;
+  }
   const [data, setData] = useState([]);
   const [running, setRunning] = useState(false);
   const [shake, setShake] = useState(false);
-
+  const deviceId = getDeviceId();
   const sensorRef = useRef(null);
   const lastSendRef = useRef(0);
 
@@ -57,7 +60,7 @@ export default function Accel() {
         await fetch(`${BASE_URL}?path=telemetry/accel`, {
           method: "POST",
           body: JSON.stringify({
-            device_id: "dev-001",
+            device_id: deviceId,
             ts: new Date().toISOString(),
             samples: [{ t: new Date().toISOString(), x, y, z }],
           }),
@@ -84,29 +87,19 @@ export default function Accel() {
       <div className="card" style={cardStyle}>
         <h2>Accelerometer Monitor</h2>
 
-        <p style={{ marginBottom: 20, color: "#64748b" }}>
-          Grafik realtime pergerakan perangkat
-        </p>
+        <p style={{ marginBottom: 20, color: "#64748b" }}>Grafik realtime pergerakan perangkat</p>
 
         <div style={buttonRow}>
           <button onClick={startSensor} disabled={running}>
             Start Sensor
           </button>
 
-          <button
-            onClick={stopSensor}
-            style={{ background: "#ef4444" }}
-            disabled={!running}
-          >
+          <button onClick={stopSensor} style={{ background: "#ef4444" }} disabled={!running}>
             Stop Sensor
           </button>
         </div>
 
-        {shake && (
-          <div style={shakeBox}>
-            ⚡ Device Shake Detected
-          </div>
-        )}
+        {shake && <div style={shakeBox}>⚡ Device Shake Detected</div>}
 
         <Chart title="X Axis" data={data} dataKey="x" color="#6366f1" />
         <Chart title="Y Axis" data={data} dataKey="y" color="#10b981" />
@@ -125,21 +118,11 @@ function Chart({ title, data, dataKey, color }) {
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
 
-          <XAxis
-            dataKey="t"
-            tick={false}
-          />
+          <XAxis dataKey="t" tick={false} />
 
           <YAxis domain={[-20, 20]} />
 
-          <Line
-            type="monotone"
-            dataKey={dataKey}
-            stroke={color}
-            strokeWidth={2}
-            dot={false}
-            isAnimationActive={false}
-          />
+          <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
