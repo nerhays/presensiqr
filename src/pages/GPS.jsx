@@ -114,6 +114,10 @@ export default function GPS({ role }) {
           <MapContainer center={pos} zoom={15} style={{ height: "100%" }}>
             <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
+            {/* marker mahasiswa */}
+            {role === "mhs" && <Marker position={pos} />}
+
+            {/* marker semua mahasiswa untuk dosen */}
             {role === "dosen" && markers.map((m, i) => <Marker key={i} position={[m.lat, m.lng]} />)}
           </MapContainer>
         </div>
