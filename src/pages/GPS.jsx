@@ -63,17 +63,28 @@ export default function GPS({ role }) {
       }
     } catch {}
   };
+  const [markers, setMarkers] = useState([]);
+  const loadAllGPS = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}?path=telemetry/gps/all`);
 
+      const data = await res.json();
+
+      if (data.ok) {
+        setMarkers(data.data.items);
+      }
+    } catch {}
+  };
   useEffect(() => {
-    if (role === "dosen") {
-      loadLatestGPS();
+    if (role !== "dosen") return;
 
-      const interval = setInterval(() => {
-        loadLatestGPS();
-      }, 5000);
+    loadAllGPS();
 
-      return () => clearInterval(interval);
-    }
+    const interval = setInterval(() => {
+      loadAllGPS();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [role]);
 
   // ===============================
@@ -103,7 +114,7 @@ export default function GPS({ role }) {
           <MapContainer center={pos} zoom={15} style={{ height: "100%" }}>
             <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-            <Marker position={pos} />
+            {role === "dosen" && markers.map((m, i) => <Marker key={i} position={[m.lat, m.lng]} />)}
           </MapContainer>
         </div>
       </div>
