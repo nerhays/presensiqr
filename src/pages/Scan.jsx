@@ -17,7 +17,9 @@ export default function Scan() {
   const scannerRef = useRef(null);
   const scannedRef = useRef(false);
 
+  const [nimInput, setNimInput] = useState("");
   const [userId, setUserId] = useState("");
+
   const [status, setStatus] = useState("idle");
 
   // idle | processing | success | error
@@ -99,9 +101,11 @@ export default function Scan() {
         <div style={card}>
           <h3>Masukkan NIM</h3>
 
-          <input type="text" placeholder="Contoh: 22012345" value={userId} onChange={(e) => setUserId(e.target.value)} style={input} />
+          <input type="text" placeholder="Contoh: 22012345" value={nimInput} onChange={(e) => setNimInput(e.target.value)} style={input} />
 
-          <p style={{ fontSize: 14, color: "#666" }}>Masukkan NIM untuk melakukan presensi</p>
+          <button style={btn} disabled={!nimInput} onClick={() => setUserId(nimInput)}>
+            Mulai Scan
+          </button>
         </div>
       )}
 
@@ -123,7 +127,6 @@ export default function Scan() {
       {status === "success" && (
         <div style={{ ...card, background: "#e8f5e9" }}>
           <div style={checkmark}>✔</div>
-
           <h3 style={{ color: "green" }}>Presensi Berhasil</h3>
         </div>
       )}
@@ -137,8 +140,6 @@ export default function Scan() {
           <button onClick={() => window.location.reload()}>Coba Lagi</button>
         </div>
       )}
-
-      {/* CSS HIDE BUTTON HTML5QRCODE */}
 
       <style>{`
 
@@ -196,6 +197,16 @@ const input = {
   marginBottom: 10,
   borderRadius: 6,
   border: "1px solid #ccc",
+};
+
+const btn = {
+  width: "100%",
+  padding: 10,
+  background: "#1976d2",
+  color: "#fff",
+  border: "none",
+  borderRadius: 6,
+  cursor: "pointer",
 };
 
 const checkmark = {
