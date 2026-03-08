@@ -40,7 +40,9 @@ export default function AdminQR() {
   };
 
   const loadPresence = async () => {
-    const res = await fetch(`${BASE_URL}?path=presence/list&course_id=${courseId}&session_id=${sessionId}`);
+    const res = await fetch(
+      `${BASE_URL}?path=presence/list&course_id=${courseId}&session_id=${sessionId}`
+    );
 
     const data = await res.json();
 
@@ -49,7 +51,6 @@ export default function AdminQR() {
     }
   };
 
-  // countdown timer
   useEffect(() => {
     if (!started) return;
 
@@ -59,7 +60,6 @@ export default function AdminQR() {
           generate();
           return 30;
         }
-
         return c - 1;
       });
     }, 1000);
@@ -67,7 +67,6 @@ export default function AdminQR() {
     return () => clearInterval(timer);
   }, [started]);
 
-  // refresh presence realtime
   useEffect(() => {
     if (!started) return;
 
@@ -84,14 +83,20 @@ export default function AdminQR() {
   return (
     <div style={wrapper}>
       <div style={card}>
-        <h2>Generate QR Presensi</h2>
+        <h2 style={title}>Generate QR Presensi</h2>
 
         {!started && (
-          <div style={{ marginBottom: 20 }}>
+          <div style={formArea}>
             <div style={field}>
               <label>Course</label>
-              <select value={courseId} onChange={(e) => setCourseId(e.target.value)}>
+
+              <select
+                value={courseId}
+                onChange={(e) => setCourseId(e.target.value)}
+                style={select}
+              >
                 <option value="">Pilih Course</option>
+
                 {courses.map((c) => (
                   <option key={c.value} value={c.value}>
                     {c.label}
@@ -102,8 +107,14 @@ export default function AdminQR() {
 
             <div style={field}>
               <label>Sesi</label>
-              <select value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
+
+              <select
+                value={sessionId}
+                onChange={(e) => setSessionId(e.target.value)}
+                style={select}
+              >
                 <option value="">Pilih Sesi</option>
+
                 {sessions.map((s) => (
                   <option key={s} value={s}>
                     {s}
@@ -112,7 +123,11 @@ export default function AdminQR() {
               </select>
             </div>
 
-            <button style={btn} onClick={() => setStarted(true)} disabled={!courseId || !sessionId}>
+            <button
+              style={btn}
+              onClick={() => setStarted(true)}
+              disabled={!courseId || !sessionId}
+            >
               Generate QR
             </button>
           </div>
@@ -121,14 +136,17 @@ export default function AdminQR() {
         {token && (
           <>
             <div style={qrBox}>
-              <QRCode value={token} size={220} />
+              <QRCode value={token} size={200} />
 
-              <p style={{ marginTop: 10 }}>
-                QR refresh dalam <b>{countdown}</b> detik
+              <p style={countdownText}>
+                refresh dalam <b>{countdown}</b> detik
               </p>
             </div>
 
-            <h3 style={{ marginTop: 30 }}>Sudah Absen ({presenceList.length})</h3>
+            <div style={presenceHeader}>
+              <h3>Sudah Absen</h3>
+              <span>{presenceList.length}</span>
+            </div>
 
             <table style={table}>
               <thead>
@@ -146,7 +164,7 @@ export default function AdminQR() {
                     <td>{i + 1}</td>
                     <td>{p.user_id}</td>
                     <td>{new Date(p.ts).toLocaleTimeString()}</td>
-                    <td>{p.status}</td>
+                    <td>✓</td>
                   </tr>
                 ))}
               </tbody>
@@ -163,33 +181,49 @@ function rowHighlight(ts) {
   const t = new Date(ts).getTime();
 
   if (now - t < 5000) {
-    return { background: "#d1fae5" };
+    return { background: "#ecfdf5" };
   }
 
   return {};
 }
 
+/* ---------- STYLE ---------- */
+
 const wrapper = {
   display: "flex",
   justifyContent: "center",
-  alignItems: "center",
-  minHeight: "80vh",
+  paddingTop: 60,
 };
 
 const card = {
-  width: 700,
-  background: "#fff",
-  padding: 30,
-  borderRadius: 10,
-  boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+  width: 750,
+  background: "#ffffff",
+  borderRadius: 18,
+  padding: 40,
+  boxShadow: "0 20px 40px rgba(0,0,0,0.05)",
 };
 
-const qrBox = {
-  textAlign: "center",
+const title = {
+  marginBottom: 30,
+};
+
+const formArea = {
+  display: "flex",
+  gap: 20,
+  alignItems: "end",
+  marginBottom: 20,
 };
 
 const field = {
-  marginBottom: 15,
+  display: "flex",
+  flexDirection: "column",
+};
+
+const select = {
+  padding: "10px 12px",
+  borderRadius: 8,
+  border: "1px solid #e2e8f0",
+  minWidth: 200,
 };
 
 const btn = {
@@ -197,8 +231,25 @@ const btn = {
   border: "none",
   background: "#2563eb",
   color: "#fff",
-  borderRadius: 6,
+  borderRadius: 8,
   cursor: "pointer",
+};
+
+const qrBox = {
+  textAlign: "center",
+  marginTop: 20,
+};
+
+const countdownText = {
+  marginTop: 10,
+  color: "#64748b",
+};
+
+const presenceHeader = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: 30,
 };
 
 const table = {
