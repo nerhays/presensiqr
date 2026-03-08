@@ -1,55 +1,152 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BASE_URL } from "../api/api";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function Accel() {
-  const [d, setD] = useState({ x: 0, y: 0, z: 0 });
+  const [data, setData] = useState([]);
+  const [running, setRunning] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const sensorRef = useRef(null);
+  const lastSendRef = useRef(0);
 
   const startSensor = () => {
-    window.addEventListener("devicemotion", async (e) => {
+    if (running) return;
+
+    setRunning(true);
+
+    const handler = async (e) => {
       const x = e.accelerationIncludingGravity?.x || 0;
       const y = e.accelerationIncludingGravity?.y || 0;
       const z = e.accelerationIncludingGravity?.z || 0;
 
-      setD({ x, y, z });
+      const magnitude = Math.sqrt(x * x + y * y + z * z);
 
-      await fetch(`${BASE_URL}?path=telemetry/accel`, {
-        method: "POST",
-        body: JSON.stringify({
-          device_id: "dev-001",
-          ts: new Date().toISOString(),
-          samples: [{ t: new Date().toISOString(), x, y, z }],
-        }),
+      if (magnitude > 20) {
+        setShake(true);
+        setTimeout(() => setShake(false), 600);
+      }
+
+      const newPoint = {
+        t: Date.now(),
+        x: Number(x.toFixed(2)),
+        y: Number(y.toFixed(2)),
+        z: Number(z.toFixed(2)),
+      };
+
+      setData((prev) => {
+        const updated = [...prev, newPoint];
+
+        if (updated.length > 40) updated.shift();
+
+        return updated;
       });
-    });
+
+      const now = Date.now();
+
+      if (now - lastSendRef.current > 300) {
+        lastSendRef.current = now;
+
+        await fetch(`${BASE_URL}?path=telemetry/accel`, {
+          method: "POST",
+          body: JSON.stringify({
+            device_id: "dev-001",
+            ts: new Date().toISOString(),
+            samples: [{ t: new Date().toISOString(), x, y, z }],
+          }),
+        });
+      }
+    };
+
+    sensorRef.current = handler;
+
+    window.addEventListener("devicemotion", handler);
+  };
+
+  const stopSensor = () => {
+    if (sensorRef.current) {
+      window.removeEventListener("devicemotion", sensorRef.current);
+      sensorRef.current = null;
+    }
+
+    setRunning(false);
   };
 
   return (
     <div style={wrapper}>
       <div className="card" style={cardStyle}>
-        <h2>Accelerometer</h2>
+        <h2>Accelerometer Monitor</h2>
 
-        <button onClick={startSensor} style={{ marginBottom: 25 }}>
-          Aktifkan Sensor
-        </button>
+        <p style={{ marginBottom: 20, color: "#64748b" }}>
+          Grafik realtime pergerakan perangkat
+        </p>
 
-        <div style={grid}>
-          <Stat label="X" value={d.x} />
-          <Stat label="Y" value={d.y} />
-          <Stat label="Z" value={d.z} />
+        <div style={buttonRow}>
+          <button onClick={startSensor} disabled={running}>
+            Start Sensor
+          </button>
+
+          <button
+            onClick={stopSensor}
+            style={{ background: "#ef4444" }}
+            disabled={!running}
+          >
+            Stop Sensor
+          </button>
         </div>
+
+        {shake && (
+          <div style={shakeBox}>
+            ⚡ Device Shake Detected
+          </div>
+        )}
+
+        <Chart title="X Axis" data={data} dataKey="x" color="#6366f1" />
+        <Chart title="Y Axis" data={data} dataKey="y" color="#10b981" />
+        <Chart title="Z Axis" data={data} dataKey="z" color="#ef4444" />
       </div>
     </div>
   );
 }
 
-function Stat({ label, value }) {
+function Chart({ title, data, dataKey, color }) {
   return (
-    <div style={statBox}>
-      <p>{label}</p>
-      <h3>{value.toFixed(2)}</h3>
+    <div style={{ height: 180, marginTop: 25 }}>
+      <h4 style={{ marginBottom: 5 }}>{title}</h4>
+
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+
+          <XAxis
+            dataKey="t"
+            tick={false}
+          />
+
+          <YAxis domain={[-20, 20]} />
+
+          <Line
+            type="monotone"
+            dataKey={dataKey}
+            stroke={color}
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
+
+/* STYLE */
 
 const wrapper = {
   display: "flex",
@@ -59,18 +156,18 @@ const wrapper = {
 
 const cardStyle = {
   width: "100%",
-  maxWidth: 800,
+  maxWidth: 900,
 };
 
-const grid = {
+const buttonRow = {
   display: "flex",
-  gap: 20,
+  gap: 10,
 };
 
-const statBox = {
-  flex: 1,
-  background: "#f1f5f9",
-  padding: 20,
-  borderRadius: 12,
-  textAlign: "center",
+const shakeBox = {
+  marginTop: 15,
+  background: "#fef3c7",
+  padding: 10,
+  borderRadius: 8,
+  color: "#92400e",
 };
