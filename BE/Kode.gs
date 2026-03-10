@@ -17,7 +17,7 @@ function handleRequest(e) {
   if (path === "presence/qr/generate") return generateQR(e);
   if (path === "presence/checkin") return checkin(e);
   if (path === "presence/status") return presenceStatus(e);
-
+  if (path === "presence/list") return presenceList(e);
   // ===== ACCEL =====
   if (path === "telemetry/accel") return accelPost(e);
   if (path === "telemetry/accel/latest") return accelLatest(e);
@@ -26,7 +26,7 @@ function handleRequest(e) {
   if (path === "telemetry/gps") return gpsPost(e);
   if (path === "telemetry/gps/latest") return gpsLatest(e);
   if (path === "telemetry/gps/history") return gpsHistory(e);
-
+  if (path === "telemetry/gps/all") return gpsAll(e);
   return jsonResponse(false, "unknown_endpoint");
 }
 
@@ -45,7 +45,7 @@ function generateQR(e) {
   const body = JSON.parse(e.postData.contents);
 
   const token = "TKN-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-  const expires = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+  const expires = new Date(Date.now() + 50 * 1000).toISOString();
 
   const sheet = SpreadsheetApp.getActive().getSheetByName("tokens");
   sheet.appendRow([token, body.course_id, body.session_id, expires]);
@@ -61,9 +61,11 @@ function checkin(e) {
   const body = JSON.parse(e.postData.contents);
 
   const tokenSheet = SpreadsheetApp.getActive().getSheetByName("tokens");
+
   const tokenData = tokenSheet.getDataRange().getValues();
 
-  let tokenValid = false;
+  let course = "";
+  let session = "";
 
   for (let i = 1; i < tokenData.length; i++) {
     const token = tokenData[i][0];
@@ -74,19 +76,22 @@ function checkin(e) {
         return jsonResponse(false, "token_expired");
       }
 
-      tokenValid = true;
+      course = tokenData[i][1];
+      session = tokenData[i][2];
+
       break;
     }
   }
 
-  if (!tokenValid) {
+  if (!course) {
     return jsonResponse(false, "invalid_token");
   }
 
   const id = "PR-" + Utilities.getUuid();
+
   const sheet = SpreadsheetApp.getActive().getSheetByName("presence");
 
-  sheet.appendRow([id, body.user_id, body.device_id, body.course_id, body.session_id, body.ts, "checked_in"]);
+  sheet.appendRow([id, body.user_id, body.device_id, course, session, body.ts, "checked_in"]);
 
   return jsonResponse(true, {
     presence_id: id,
@@ -117,7 +122,31 @@ function presenceStatus(e) {
 
   return jsonResponse(false, "not_found");
 }
+//list
+function presenceList(e) {
+  const sheet = SpreadsheetApp.getActive().getSheetByName("presence");
 
+  const data = sheet.getDataRange().getValues();
+
+  const course = e.parameter.course_id;
+  const session = e.parameter.session_id;
+
+  let items = [];
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][3] === course && data[i][4] === session) {
+      items.push({
+        user_id: data[i][1],
+        ts: data[i][5],
+        status: data[i][6],
+      });
+    }
+  }
+
+  return jsonResponse(true, {
+    items: items,
+  });
+}
 // ===================================================
 // ================= ACCELEROMETER ===================
 // ===================================================
@@ -211,5 +240,37 @@ function gpsHistory(e) {
   return jsonResponse(true, {
     device_id: device,
     items: items,
+  });
+}
+
+//get gps
+function gpsAll(e) {
+  const sheet = SpreadsheetApp.getActive().getSheetByName("gps");
+
+  const data = sheet.getDataRange().getValues();
+
+  const now = new Date();
+  const limit = 2 * 60 * 1000; // 2 menit
+
+  let devices = {};
+
+  for (let i = 1; i < data.length; i++) {
+    const device = data[i][0];
+    const ts = new Date(data[i][1]);
+
+    // cek apakah data masih dalam rentang waktu
+    if (now - ts > limit) continue;
+
+    devices[device] = {
+      device_id: device,
+      ts: data[i][1],
+      lat: data[i][2],
+      lng: data[i][3],
+      accuracy_m: data[i][4],
+    };
+  }
+
+  return jsonResponse(true, {
+    items: Object.values(devices),
   });
 }
