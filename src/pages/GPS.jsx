@@ -2,6 +2,23 @@ import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import { useState, useEffect } from "react";
 import { BASE_URL } from "../api/api";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+const customIcon = L.divIcon({
+  className: "",
+  html: `
+  <div style="
+    width:22px;
+    height:22px;
+    background:#2563eb;
+    border-radius:50%;
+    border:4px solid white;
+    box-shadow:0 0 8px rgba(0,0,0,0.4);
+  "></div>
+  `,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+});
 
 export default function GPS({ role }) {
   const [pos, setPos] = useState([-7.2575, 112.7521]);
@@ -63,7 +80,9 @@ export default function GPS({ role }) {
       }
     } catch {}
   };
+
   const [markers, setMarkers] = useState([]);
+
   const loadAllGPS = async () => {
     try {
       const res = await fetch(`${BASE_URL}?path=telemetry/gps/all`);
@@ -75,6 +94,7 @@ export default function GPS({ role }) {
       }
     } catch {}
   };
+
   useEffect(() => {
     if (role !== "dosen") return;
 
@@ -115,10 +135,13 @@ export default function GPS({ role }) {
             <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
             {/* marker mahasiswa */}
-            {role === "mhs" && <Marker position={pos} />}
+            {role === "mhs" && <Marker position={pos} icon={customIcon} />}
 
             {/* marker semua mahasiswa untuk dosen */}
-            {role === "dosen" && markers.map((m, i) => <Marker key={i} position={[m.lat, m.lng]} />)}
+            {role === "dosen" &&
+              markers.map((m, i) => (
+                <Marker key={i} position={[m.lat, m.lng]} icon={customIcon} />
+              ))}
           </MapContainer>
         </div>
       </div>
