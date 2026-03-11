@@ -4,20 +4,30 @@ import { BASE_URL } from "../api/api";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-const customIcon = L.divIcon({
-  className: "",
+/* ===============================
+   ICON MARKER
+================================ */
+
+// marker mahasiswa
+const mhsIcon = L.divIcon({
+  className: "gps-marker",
   html: `
-  <div style="
-    width:22px;
-    height:22px;
-    background:#2563eb;
-    border-radius:50%;
-    border:4px solid white;
-    box-shadow:0 0 8px rgba(0,0,0,0.4);
-  "></div>
+    <div class="gps-pulse-blue"></div>
+    <div class="gps-dot-blue"></div>
   `,
-  iconSize: [22, 22],
-  iconAnchor: [11, 11],
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+});
+
+// marker dosen
+const dosenIcon = L.divIcon({
+  className: "gps-marker",
+  html: `
+    <div class="gps-pulse-red"></div>
+    <div class="gps-dot-red"></div>
+  `,
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
 });
 
 export default function GPS({ role }) {
@@ -69,18 +79,6 @@ export default function GPS({ role }) {
   // DOSEN : LIHAT GPS MAHASISWA
   // ===============================
 
-  const loadLatestGPS = async () => {
-    try {
-      const res = await fetch(`${BASE_URL}?path=telemetry/gps/latest&device_id=${deviceId}`);
-
-      const data = await res.json();
-
-      if (data.ok) {
-        setPos([data.data.lat, data.data.lng]);
-      }
-    } catch {}
-  };
-
   const [markers, setMarkers] = useState([]);
 
   const loadAllGPS = async () => {
@@ -116,9 +114,17 @@ export default function GPS({ role }) {
       <div className="card" style={cardStyle}>
         <h2>GPS Tracking</h2>
 
-        {role === "mhs" && <p style={{ marginBottom: 25, color: "#6b7280" }}>Kirim lokasi perangkat</p>}
+        {role === "mhs" && (
+          <p style={{ marginBottom: 25, color: "#6b7280" }}>
+            Kirim lokasi perangkat
+          </p>
+        )}
 
-        {role === "dosen" && <p style={{ marginBottom: 25, color: "#6b7280" }}>Monitoring lokasi mahasiswa</p>}
+        {role === "dosen" && (
+          <p style={{ marginBottom: 25, color: "#6b7280" }}>
+            Monitoring lokasi mahasiswa
+          </p>
+        )}
 
         {role === "mhs" && (
           <button onClick={sendGPS} style={{ marginBottom: 20 }}>
@@ -126,21 +132,25 @@ export default function GPS({ role }) {
           </button>
         )}
 
-        {status === "success" && <div style={successBox}>✅ Lokasi berhasil dikirim</div>}
+        {status === "success" && (
+          <div style={successBox}>✅ Lokasi berhasil dikirim</div>
+        )}
 
-        {status === "error" && <div style={errorBox}>❌ Gagal mengirim lokasi</div>}
+        {status === "error" && (
+          <div style={errorBox}>❌ Gagal mengirim lokasi</div>
+        )}
 
         <div style={mapContainer}>
           <MapContainer center={pos} zoom={15} style={{ height: "100%" }}>
             <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
             {/* marker mahasiswa */}
-            {role === "mhs" && <Marker position={pos} icon={customIcon} />}
+            {role === "mhs" && <Marker position={pos} icon={mhsIcon} />}
 
-            {/* marker semua mahasiswa untuk dosen */}
+            {/* marker mahasiswa dilihat dosen */}
             {role === "dosen" &&
               markers.map((m, i) => (
-                <Marker key={i} position={[m.lat, m.lng]} icon={customIcon} />
+                <Marker key={i} position={[m.lat, m.lng]} icon={dosenIcon} />
               ))}
           </MapContainer>
         </div>
@@ -148,6 +158,84 @@ export default function GPS({ role }) {
     </div>
   );
 }
+
+/* ===============================
+   STYLE MARKER
+================================ */
+
+const style = document.createElement("style");
+style.innerHTML = `
+
+.gps-marker {
+  position: relative;
+}
+
+/* MAHASISWA */
+
+.gps-dot-blue {
+  width: 14px;
+  height: 14px;
+  background: #2563eb;
+  border-radius: 50%;
+  border: 3px solid white;
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 2;
+}
+
+.gps-pulse-blue {
+  width: 30px;
+  height: 30px;
+  background: rgba(37,99,235,0.4);
+  border-radius: 50%;
+  position: absolute;
+  animation: pulse 1.8s infinite;
+}
+
+/* DOSEN */
+
+.gps-dot-red {
+  width: 14px;
+  height: 14px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 3px solid white;
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 2;
+}
+
+.gps-pulse-red {
+  width: 30px;
+  height: 30px;
+  background: rgba(239,68,68,0.4);
+  border-radius: 50%;
+  position: absolute;
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+`;
+document.head.appendChild(style);
+
+/* ===============================
+   STYLE LAYOUT
+================================ */
 
 const wrapper = {
   display: "flex",
