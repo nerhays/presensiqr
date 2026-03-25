@@ -6,33 +6,26 @@ import GPS from "./pages/GPS";
 import Accel from "./pages/Accel";
 
 import BottomNav from "./components/BottomNav";
-
+import AccelMonitor from "./pages/AccelMonitor";
 export default function App() {
-
-  const [role,setRole] = useState("");
-  const [page,setPage] = useState("");
+  const [role, setRole] = useState("");
+  const [page, setPage] = useState("");
 
   /* ==========================
      ROLE SCREEN
   ========================== */
 
-  if(!role){
-    return(
-
+  if (!role) {
+    return (
       <div className="app-container">
-
         <div className="card" style={roleCard}>
-
           <h2>Pilih Role</h2>
 
-          <p style={{color:"#64748b",marginBottom:20}}>
-            Silakan pilih apakah anda sebagai dosen atau mahasiswa
-          </p>
+          <p style={{ color: "#64748b", marginBottom: 20 }}>Silakan pilih apakah anda sebagai dosen atau mahasiswa</p>
 
           <div style={roleButtons}>
-
             <button
-              onClick={()=>{
+              onClick={() => {
                 setRole("mhs");
                 setPage("scan");
               }}
@@ -41,20 +34,16 @@ export default function App() {
             </button>
 
             <button
-              onClick={()=>{
+              onClick={() => {
                 setRole("dosen");
                 setPage("qr");
               }}
             >
               Dosen
             </button>
-
           </div>
-
         </div>
-
       </div>
-
     );
   }
 
@@ -62,32 +51,23 @@ export default function App() {
      MAIN APP
   ========================== */
 
-  return(
-
+  return (
     <div className="app-container">
-
       {/* DOSEN */}
 
-      {role==="dosen" && page==="qr" && <AdminQR/>}
-      {role==="dosen" && page==="gps" && <GPS role={role}/>}
-      {role==="dosen" && page==="accel" && <Accel/>}
+      {role === "dosen" && page === "qr" && <AdminQR />}
+      {role === "dosen" && page === "gps" && <GPS role={role} />}
+      {role === "dosen" && page === "accel" && <AccelMonitor />}
 
       {/* MAHASISWA */}
 
-      {role==="mhs" && page==="scan" && <Scan/>}
-      {role==="mhs" && page==="gps" && <GPS role={role}/>}
-      {role==="mhs" && page==="accel" && <Accel/>}
+      {role === "mhs" && page === "scan" && <Scan />}
+      {role === "mhs" && page === "gps" && <GPS role={role} />}
+      {role === "mhs" && page === "accel" && <Accel />}
 
-      <BottomNav
-        role={role}
-        page={page}
-        setPage={setPage}
-      />
-
+      <BottomNav role={role} page={page} setPage={setPage} />
     </div>
-
   );
-
 }
 
 /* ==========================
@@ -95,13 +75,13 @@ export default function App() {
 ========================== */
 
 const roleCard = {
-  maxWidth:420,
-  margin:"100px auto",
-  textAlign:"center"
+  maxWidth: 420,
+  margin: "100px auto",
+  textAlign: "center",
 };
 
 const roleButtons = {
-  display:"flex",
-  justifyContent:"center",
-  gap:15
+  display: "flex",
+  justifyContent: "center",
+  gap: 15,
 };
