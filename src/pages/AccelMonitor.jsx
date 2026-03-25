@@ -31,14 +31,14 @@ export default function AccelMonitor() {
         {devices.length === 0 && <p style={{ color: "#64748b" }}>Tidak ada data...</p>}
 
         <div style={grid}>
-          {devices.map((d, i) => {
+          {devices.map((d) => {
             const magnitude = Math.sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
 
             const isShake = magnitude > 20;
 
             return (
               <div
-                key={i}
+                key={d.device_id}
                 style={{
                   ...deviceCard,
                   border: isShake ? "2px solid #f59e0b" : "1px solid #e5e7eb",
